@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khảo Sát Du Lịch Việt Nam - Ultimate Animation</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- jQuery CDN -->
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* Animated Shimmer Bar */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .progress-shimmer {
+      background: linear-gradient(90deg, #0d9488 0%, #2dd4bf 50%, #0d9488 100%);
+      background-size: 200% 100%;
+      animation: shimmer 2.5s infinite linear;
+    }
+
+    /* Option Cards Animation & Glow */
+    .option-card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+    .option-card:hover {
+      transform: translateY(-4px) scale(1.01) rotateX(2deg);
+      border-color: #14b8a6;
+      box-shadow: 0 12px 25px -5px rgba(20, 184, 166, 0.25), 0 0 15px rgba(45, 212, 191, 0.2);
+    }
+    .option-card.selected {
+      border-color: #0d9488;
+      background-color: #f0fdf4;
+      box-shadow: 0 0 0 3px #0d9488, 0 8px 20px rgba(13, 148, 136, 0.25);
+      animation: selectBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes selectBounce {
+      0% { transform: scale(0.97); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    /* Ripple Effect */
+    .ripple-btn {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.6);
+      transform: scale(0);
+      animation: rippleAnim 0.6s linear;
+      pointer-events: none;
+    }
+    @keyframes rippleAnim {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+
+    /* Countdown Circle Scale */
+    @keyframes popScale {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); opacity: 0; }
+    }
+    .animate-countdown-num {
+      animation: popScale 0.9s ease-in-out forwards;
+    }
+
+    /* Stagger Animation Helper */
+    .stagger-item {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    /* 3D Card Flip Transition */
+    .flip-card-inner {
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    }
+    .flip-out {
+      transform: rotateY(-90deg) scale(0.95);
+      opacity: 0;
+    }
+    .flip-in {
+      transform: rotateY(0deg) scale(1);
+      opacity: 1;
+    }
+
+    /* Glow pulse for result */
+    @keyframes auraGlow {
+      0%, 100% { box-shadow: 0 0 25px rgba(20, 184, 166, 0.3); }
+      50% { box-shadow: 0 0 45px rgba(20, 184, 166, 0.6); }
+    }
+    .aura-effect {
+      animation: auraGlow 3s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-800 min-h-screen relative overflow-x-hidden flex items-center justify-center p-4">
+
+  <!-- Dynamic Animated Background Canvas -->
+  <div class="fixed inset-0 z-0">
+    <img src="https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1920&q=80" class="w-full h-full object-cover opacity-25 blur-sm scale-105" alt="Background">
+    <div class="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-slate-900/80 to-teal-950/80"></div>
+  </div>
+
+  <main class="relative z-10 w-full max-w-3xl my-8">
+    
+    <!-- HEADER & LOGO -->
+    <header class="text-center mb-6">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-sm font-semibold mb-3 backdrop-blur-md shadow-lg">
+        <i class="fa-solid fa-compass animate-spin" style="animation-duration: 8s;"></i> Việt Nam Travel Discovery
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight drop-shadow-md">
+        Khám Phá Điểm Đến Lý Tưởng
+      </h1>
+      <p class="text-slate-300 text-sm sm:text-base mt-1">Trả lời 10 câu hỏi để tìm ra chân trời du lịch tiếp theo dành riêng cho bạn</p>
+    </header>
+
+    <!-- SURVEY CONTAINER CARD -->
+    <div class="glass-card rounded-3xl shadow-2xl p-6 sm:p-10 overflow-hidden relative border border-white/30">
+
+      <!-- SCREEN 1: WELCOME INTRO -->
+      <div id="welcome-screen" class="text-center py-6">
+        <div class="w-24 h-24 bg-gradient-to-tr from-teal-400 to-emerald-500 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 text-4xl shadow-xl shadow-teal-500/30 animate-bounce">
+          <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-3">Bạn đã sẵn sàng lên đường?</h2>
+        <p class="text-slate-600 mb-8 max-w-md mx-auto leading-relaxed">
+          Bài trắc nghiệm tương tác giúp phân tích gu du lịch, tính cách và sở thích của bạn để đưa ra gợi ý địa danh Việt Nam hoàn hảo nhất!
+        </p>
+        
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button id="btn-start" class="ripple-btn w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-bold rounded-2xl shadow-xl hover:shadow-teal-500/40 transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0 text-lg flex items-center justify-center gap-2">
+            <span>Bắt Đầu Khảo Sát</span>
+            <i class="fa-solid fa-play text-xs"></i>
+          </button>
+          
+          <button id="btn-view-history" class="w-full sm:w-auto px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl transition border border-slate-200">
+            <i class="fa-solid fa-clock-rotate-left mr-2 text-teal-600"></i> Xem Khảo Sát Đã Lưu (<span id="history-count">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- SCREEN 1.5: COUNTDOWN OVERLAY -->
+      <div id="countdown-screen" class="hidden text-center py-12 flex flex-col items-center justify-center">
+        <p class="text-slate-500 font-bold uppercase tracking-widest text-xs mb-4">Chuẩn bị khám phá...</p>
+        <div class="w-32 h-32 rounded-full border-4 border-teal-500/30 border-t-teal-500 flex items-center justify-center shadow-2xl relative">
+          <span id="countdown-num" class="text-6xl font-black bg-gradient-to-r from-teal-600 to-emerald-600 bg-clip-text text-transparent">3</span>
+        </div>
+        <p class="text-slate-700 font-semibold mt-6 text-sm animate-pulse">Đang tải câu hỏi trắc nghiệm...</p>
+      </div>
+
+      <!-- SCREEN 2: QUESTIONNAIRE (Hidden initially) -->
+      <div id="quiz-screen" class="hidden">
+        
+        <!-- Progress Bar -->
+        <div class="mb-6">
+          <div class="flex justify-between items-center text-xs font-semibold text-slate-500 mb-2">
+            <span id="question-number">Câu hỏi 1/10</span>
+            <span id="progress-percent" class="text-teal-600 font-bold">10%</span>
+          </div>
+          <div class="w-full bg-slate-200/70 rounded-full h-3 overflow-hidden p-0.5 shadow-inner">
+            <div id="progress-bar" class="progress-shimmer h-full rounded-full transition-all duration-500 ease-out w-10"></div>
+          </div>
+        </div>
+
+        <!-- Question Box Container with 3D Flip capability -->
+        <div id="question-card" class="flip-card-inner min-h-[320px] flex flex-col justify-between">
+          <div>
+            <h3 id="question-text" class="text-xl sm:text-2xl font-bold text-slate-900 mb-6 leading-snug">
+              <!-- Dynamic Question Text -->
+            </h3>
+
+            <!-- Options Container -->
+            <div id="options-container" class="space-y-3.5">
+              <!-- Dynamic Options rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Bottom Navigation Controls -->
+          <div class="flex items-center justify-between mt-8 pt-4 border-t border-slate-200/80">
+            <button id="btn-prev" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition opacity-0 cursor-default" disabled>
+              <i class="fa-solid fa-chevron-left mr-2"></i> Quay lại
+            </button>
+            <button id="btn-next" class="ripple-btn px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-semibold text-sm rounded-xl shadow-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+              Tiếp theo <i class="fa-solid fa-chevron-right ml-2"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- SCREEN 3: RESULT DISPLAY (Hidden initially) -->
+      <div id="result-screen" class="hidden">
+        
+        <div class="text-center mb-6">
+          <span class="inline-block px-4 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2 animate-pulse">
+            <i class="fa-solid fa-award mr-1"></i> kết quả khảo sát & Thống kê
+          </span>
+          <h2 id="result-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <!-- Result Title -->
+          </h2>
+        </div>
+
+        <!-- STATS SUMMARY BOX WITH ANIMATED COUNT-UP NUMBERS -->
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 mb-6 shadow-sm">
+          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 text-center">Thống kê 10 câu trả lời của bạn:</h4>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-3 shadow-sm hover:scale-105 transition">
+              <span class="block text-xs text-blue-600 font-semibold">Nhóm A (Biển đảo)</span>
+              <span id="stat-count-a" class="count-up text-2xl font-black text-blue-700" data-target="0">0</span> <span class="text-xs font-bold text-blue-700">câu</span>
+            </div>
+            <div class="bg-emerald-50/80 border border-emerald-100 rounded-xl p-3 shadow-sm hover:scale-105 transition">
+              <span class="block text-xs text-emerald-600 font-semibold">Nhóm B (Núi rừng)</span>
+              <span id="stat-count-b" class="count-up text-2xl font-black text-emerald-700" data-target="0">0</span> <span class="text-xs font-bold text-emerald-700">câu</span>
+            </div>
+            <div class="bg-amber-50/80 border border-amber-100 rounded-xl p-3 shadow-sm hover:scale-105 transition">
+              <span class="block text-xs text-amber-600 font-semibold">Nhóm C (Phố cổ)</span>
+              <span id="stat-count-c" class="count-up text-2xl font-black text-amber-700" data-target="0">0</span> <span class="text-xs font-bold text-amber-700">câu</span>
+            </div>
+            <div class="bg-purple-50/80 border border-purple-100 rounded-xl p-3 shadow-sm hover:scale-105 transition">
+              <span class="block text-xs text-purple-600 font-semibold">Nhóm D (Sông nước)</span>
+              <span id="stat-count-d" class="count-up text-2xl font-black text-purple-700" data-target="0">0</span> <span class="text-xs font-bold text-purple-700">câu</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Banner Image with Parallax Aura Glow Effect -->
+        <div class="relative rounded-2xl overflow-hidden mb-6 h-56 sm:h-72 shadow-xl group aura-effect">
+          <img id="result-image" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="" alt="Result Destination">
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent flex items-end p-6">
+            <div>
+              <p class="text-teal-300 font-semibold text-xs uppercase tracking-widest mb-1">Địa danh đề xuất hàng đầu</p>
+              <h4 id="result-locations" class="text-white font-extrabold text-xl sm:text-2xl drop-shadow-md"></h4>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Description Paragraph -->
+        <div class="bg-teal-50/70 border border-teal-100 rounded-2xl p-5 mb-6 text-slate-700 leading-relaxed text-base shadow-inner" id="result-description">
+          <!-- Result Description HTML -->
+        </div>
+
+        <!-- Highlights & Top Picks Tags -->
+        <div class="mb-8">
+          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Trải nghiệm không thể bỏ lỡ:</h4>
+          <div id="result-highlights" class="flex flex-wrap gap-2">
+            <!-- Dynamic tags -->
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <button id="btn-restart" class="ripple-btn w-full sm:w-auto px-8 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg transition">
+            <i class="fa-solid fa-rotate-right mr-2"></i> Làm lại khảo sát
+          </button>
+          <button id="btn-save-clipboard" class="ripple-btn w-full sm:w-auto px-6 py-3.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow transition">
+            <i class="fa-solid fa-copy mr-2"></i> Sao chép kết quả
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- HISTORY MODAL -->
+  <div id="history-modal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-card bg-white/95 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative max-h-[80vh] flex flex-col border border-white/50">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+        <h3 class="text-xl font-bold text-slate-900"><i class="fa-solid fa-clock-rotate-left text-teal-600 mr-2"></i> Lịch Sử Khảo Sát Đã Lưu</h3>
+        <button id="btn-close-modal" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="history-list-container" class="overflow-y-auto space-y-3 pr-1 flex-1">
+        <!-- Rendered history items -->
+      </div>
+
+      <div class="pt-4 border-t border-slate-100 flex justify-between items-center mt-4">
+        <button id="btn-clear-history" class="text-red-500 hover:text-red-700 font-semibold text-sm transition">
+          <i class="fa-solid fa-trash mr-1"></i> Xóa tất cả lịch sử
+        </button>
+        <button id="btn-modal-back" class="px-5 py-2 bg-slate-900 text-white text-sm font-bold rounded-xl">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+
+      // DATA: 10 SURVEY QUESTIONS
+      const questions = [
+        {
+          title: "1. Mục đích chính của chuyến đi lần này là gì?",
+          options: [
+            { text: "Tắm biển, nghỉ dưỡng, hòa mình vào làn nước trong xanh", category: "A" },
+            { text: "Khám phá thiên nhiên núi rừng hùng vĩ, săn mây", category: "B" },
+            { text: "Tìm hiểu văn hóa, lịch sử và check-in kiến trúc cổ", category: "C" },
+            { text: "Thưởng thức ẩm thực địa phương và tận hưởng bình yên", category: "D" }
+          ]
+        },
+        {
+          title: "2. Bạn muốn trải nghiệm chuyến đi này cùng ai?",
+          options: [
+            { text: "Đi cùng người yêu / bạn đời (cần lãng mạn, cảnh đẹp)", category: "A" },
+            { text: "Đi cùng nhóm bạn thân (thích phượt, trải nghiệm)", category: "B" },
+            { text: "Đi cùng gia đình (thích yên bình, tiện nghi)", category: "C" },
+            { text: "Đi một mình (Solo trip - tự do trải nghiệm)", category: "D" }
+          ]
+        },
+        {
+          title: "3. Không gian thiên nhiên nào khiến bạn hứng thú nhất?",
+          options: [
+            { text: "Bãi cát trắng mịn, rặng dừa và tiếng sóng biển", category: "A" },
+            { text: "Đỉnh núi mây mù bao phủ, không khí lạnh buốt", category: "B" },
+            { text: "Những góc phố cổ rêu phong, đèn lồng lung linh", category: "C" },
+            { text: "Kênh rạch sông nước, vườn trái cây sai trĩu quả", category: "D" }
+          ]
+        },
+        {
+          title: "4. Khí hậu lý tưởng nhất cho chuyến đi của bạn?",
+          options: [
+            { text: "Nắng ấm, trời xanh trong mây trắng", category: "A" },
+            { text: "Mát mẻ, se lạnh quanh năm", category: "B" },
+            { text: "Thời tiết dịu nhẹ, nắng nhẹ mộng mơ", category: "C" },
+            { text: "Khí hậu ôn hòa, nắng gió dễ chịu", category: "D" }
+          ]
+        },
+        {
+          title: "5. Thời lượng chuyến đi dự kiến của bạn?",
+          options: [
+            { text: "3 ngày 2 đêm (vừa đủ chill biển)", category: "A" },
+            { text: "4 ngày 3 đêm (thỏa sức chinh phục, leo núi)", category: "B" },
+            { text: "2 ngày 1 đêm / Cuối tuần tranh thủ", category: "C" },
+            { text: "Chuyến đi dài 5-7 ngày khám phá trọn vẹn", category: "D" }
+          ]
+        },
+        {
+          title: "6. Phong cách hoạt động yêu thích trong chuyến đi?",
+          options: [
+            { text: "Lặn ngắm san hô, chèo SUP, nằm phơi nắng ở resort", category: "A" },
+            { text: "Trekking, chạy xe máy đường đèo, ngắm bình minh", category: "B" },
+            { text: "Mặc trang phục truyền thống dạo phố, chụp ảnh", category: "C" },
+            { text: "Đi chợ đêm, ghé quán ăn đường phố, đi thuyền du ngoạn", category: "D" }
+          ]
+        },
+        {
+          title: "7. Mức ngân sách dự kiến cho mỗi người?",
+          options: [
+            { text: "Thoải mái / Sang chảnh (5 - 10+ triệu VNĐ)", category: "A" },
+            { text: "Phù hợp / Tiết kiệm phượt (2 - 4 triệu VNĐ)", category: "B" },
+            { text: "Trung bình khá (3 - 6 triệu VNĐ)", category: "C" },
+            { text: "Hợp lý, tối ưu chi phí (Dưới 3 triệu VNĐ)", category: "D" }
+          ]
+        },
+        {
+          title: "8. Phương tiện di chuyển mong muốn?",
+          options: [
+            { text: "Máy bay nhanh chóng, tiện lợi", category: "A" },
+            { text: "Xe máy phượt tự do ngắm cảnh", category: "B" },
+            { text: "Tàu hỏa lãng mạn hoặc xe giường nằm", category: "C" },
+            { text: "Ô tô cá nhân / Ô tô du lịch thoải mái", category: "D" }
+          ]
+        },
+        {
+          title: "9. Nơi lưu trú bạn yêu thích nhất?",
+          options: [
+            { text: "Resort ven biển có hồ bơi vô cực", category: "A" },
+            { text: "Homestay nhỏ xinh trên sườn đồi, view thung lũng", category: "B" },
+            { text: "Khách sạn phong cách cổ điển tại trung tâm", category: "C" },
+            { text: "Homestay miệt vườn, nhà sàn gỗ gần gũi", category: "D" }
+          ]
+        },
+        {
+          title: "10. Yếu tố nào quyết định sự thành công của chuyến đi?",
+          options: [
+            { text: "Cảnh biển đẹp, hoàng hôn rực rỡ", category: "A" },
+            { text: "Cảm giác chinh phục và sự yên tĩnh thiên nhiên", category: "B" },
+            { text: "Nhiều hình đẹp mang về & giàu giá trị văn hóa", category: "C" },
+            { text: "Đồ ăn ngon tuyệt vời & sự nồng hậu địa phương", category: "D" }
+          ]
+        }
+      ];
+
+      // RESULT PRESETS
+      const resultPresets = {
+        A: {
+          title: "Tín Đồ Biển Xanh & Nắng Vàng",
+          locations: "Phú Quốc • Nha Trang • Quy Nhơn • Vũng Tàu",
+          image: "https://images.unsplash.com/photo-1540202404-a2f29016b523?auto=format&fit=crop&w=1200&q=80",
+          description: "Gu của bạn là tận hưởng không gian biển xanh ngọc bích, bãi cát trắng mịn cùng những buổi hoàng hôn lãng mạn. Bạn thích sự thư thái tại các resort sang trọng, đắm mình trong làn nước mát lạnh và thưởng thức hải sản tươi ngon tuyệt hảo.",
+          highlights: ["Lặn ngắm san hô", "Hoàng hôn Sunset Sanato", "Thưởng thức tiệc hải sản", "Nghỉ dưỡng Resort ven biển", "Chèo SUP biển"]
+        },
+        B: {
+          title: "Nhà Chinh Phục Núi Rừng & Mây Ngàn",
+          locations: "Đà Lạt • Sapa • Hà Giang • Măng Đen",
+          image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+          description: "Tâm hồn bạn thuộc về núi cao hùng vĩ và không khí se lạnh mộng mơ. Bạn thích cảm giác chill bên tách cà phê ngắm sương mù, săn mây trên các đỉnh núi cao hay chạy xe phượt qua những cung đèo ngoằn ngoèo ngoạn mục.",
+          highlights: ["Săn mây bình minh", "Check-in cà phê đồi mộng mơ", "Phượt đèo Mã Pí Lèng / O Quy Hồ", "Đốt lửa trại buổi đêm", "Trải nghiệm homestay góc view thung lũng"]
+        },
+        C: {
+          title: "Người Yêu Văn Hóa & Hoài Niệm Cổ Kính",
+          locations: "Hội An • Cố Đô Huế • Hà Nội 36 Phố Phường",
+          image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=1200&q=80",
+          description: "Bạn bị thu hút bởi nét đẹp hoài cổ, di sản kiến trúc và những giá trị lịch sử lâu đời. Chuyến đi hoàn hảo của bạn là dạo bước trên những phố cổ rực rỡ đèn lồng, ghé thăm đại nội đền đài trầm mặc và chụp những bức ảnh sống ảo thơ mộng.",
+          highlights: ["Dạo phố cổ đèn lồng", "Check-in Áo Dài tại Đại Nội", "Thưởng thức Nhã nhạc Cung đình", "Thả đèn hoa đăng trên sông", "Ghé thăm di sản UNESCO"]
+        },
+        D: {
+          title: "Kẻ Lữ Hành Sông Nước & Ẩm Thực Miệt Vườn",
+          locations: "Cần Thơ • An Giang • Bến Tre • Miền Tây",
+          image: "https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1200&q=80",
+          description: "Bạn yêu thích nét bình yên, mộc mạc và sự nồng hậu của con người. Bạn hào hứng với những chuyến du ngoạn sông nước miệt vườn, ghé thăm chợ nổi đặc trưng và oanh tạc trọn vẹn nền ẩm thực địa phương đa dạng phong phú.",
+          highlights: ["Khám phá Chợ nổi Cái Răng", "Đi xuồng ba lá trong rừng tràm", "Thưởng thức trái cây tại vườn", "Thưởng thức bánh xèo miền Tây", "Trải nghiệm làm bánh dân gian"]
+        }
+      };
+
+      // STATE VARIABLES
+      let currentQuestionIndex = 0;
+      let userAnswers = new Array(questions.length).fill(null);
+
+      updateHistoryCount();
+
+      // --- ANIMATION HELPER: RIPPLE EFFECT ---
+      $(document).on('click', '.ripple-btn', function(e) {
+        const btn = $(this);
+        const ripple = $('<span class="ripple"></span>');
+        const diameter = Math.max(btn.outerWidth(), btn.outerHeight());
+        const radius = diameter / 2;
+
+        ripple.css({
+          width: diameter,
+          height: diameter,
+          left: e.pageX - btn.offset().left - radius,
+          top: e.pageY - btn.offset().top - radius
+        });
+
+        btn.append(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+
+      // --- EVENTS ---
+
+      // Start Survey with COUNTDOWN ANIMATION
+      $('#btn-start').click(function() {
+        $('#welcome-screen').fadeOut(300, function() {
+          $('#countdown-screen').removeClass('hidden').fadeIn(300);
+
+          let count = 3;
+          $('#countdown-num').text(count).addClass('animate-countdown-num');
+
+          const timer = setInterval(() => {
+            count--;
+            if (count > 0) {
+              $('#countdown-num').removeClass('animate-countdown-num');
+              setTimeout(() => {
+                $('#countdown-num').text(count).addClass('animate-countdown-num');
+              }, 50);
+            } else {
+              clearInterval(timer);
+              $('#countdown-screen').fadeOut(300, function() {
+                $('#quiz-screen').removeClass('hidden').fadeIn(400);
+                renderQuestion(currentQuestionIndex);
+              });
+            }
+          }, 900);
+        });
+      });
+
+      // Next Question Click
+      $('#btn-next').click(function() {
+        if (userAnswers[currentQuestionIndex] === null) return;
+
+        if (currentQuestionIndex < questions.length - 1) {
+          currentQuestionIndex++;
+          animateQuestionTransition('next');
+        } else {
+          calculateAndShowResult();
+        }
+      });
+
+      // Previous Question Click
+      $('#btn-prev').click(function() {
+        if (currentQuestionIndex > 0) {
+          currentQuestionIndex--;
+          animateQuestionTransition('prev');
+        }
+      });
+
+      // Restart Button
+      $('#btn-restart').click(function() {
+        currentQuestionIndex = 0;
+        userAnswers = new Array(questions.length).fill(null);
+        
+        $('#result-screen').fadeOut(300, function() {
+          $('#welcome-screen').fadeIn(400);
+          updateHistoryCount();
+        });
+      });
+
+      // Copy Result to Clipboard
+      $('#btn-save-clipboard').click(function() {
+        const title = $('#result-title').text();
+        const locations = $('#result-locations').text();
+        const text = `Kết quả Khảo sát Du lịch của tôi:\n- Phong cách: ${title}\n- Điểm đến gợi ý: ${locations}`;
+        
+        navigator.clipboard.writeText(text).then(() => {
+          alert('Đã sao chép kết quả vào bộ nhớ tạm!');
+        });
+      });
+
+      // History Modal Controls
+      $('#btn-view-history').click(function() {
+        renderHistoryList();
+        $('#history-modal').removeClass('hidden');
+      });
+
+      $('#btn-close-modal, #btn-modal-back').click(function() {
+        $('#history-modal').addClass('hidden');
+      });
+
+      $('#btn-clear-history').click(function() {
+        if (confirm('Bạn có chắc muốn xóa toàn bộ lịch sử khảo sát?')) {
+          localStorage.removeItem('travel_survey_history');
+          renderHistoryList();
+          updateHistoryCount();
+        }
+      });
+
+      // --- CORE FUNCTIONS WITH ANIMATIONS ---
+
+      function renderQuestion(index) {
+        const q = questions[index];
+        $('#question-number').text(`Câu hỏi ${index + 1}/${questions.length}`);
+        const percent = Math.round(((index + 1) / questions.length) * 100);
+        $('#progress-percent').text(`${percent}%`);
+        $('#progress-bar').css('width', `${percent}%`);
+        $('#question-text').text(q.title);
+
+        const $optionsContainer = $('#options-container').empty();
+        
+        q.options.forEach((opt, idx) => {
+          const isSelected = userAnswers[index] === opt.category;
+          const $optCard = $(`
+            <div class="option-card stagger-item p-4 rounded-2xl border border-slate-200 cursor-pointer flex items-center justify-between ${isSelected ? 'selected' : 'bg-white hover:border-teal-300'}" data-category="${opt.category}">
+              <div class="flex items-center gap-3">
+                <span class="badge w-8 h-8 rounded-full border flex items-center justify-center font-bold text-sm transition-all duration-300 ${isSelected ? 'bg-teal-600 text-white border-teal-600 rotate-12 scale-110' : 'bg-slate-100 text-slate-500 border-slate-200'}">
+                  ${String.fromCharCode(65 + idx)}
+                </span>
+                <span class="text-slate-700 font-medium text-sm sm:text-base">${opt.text}</span>
+              </div>
+              <i class="fa-solid fa-circle-check text-teal-600 text-xl transition-all duration-300 ${isSelected ? 'block scale-110' : 'hidden'}"></i>
+            </div>
+          `);
+
+          // Option click event
+          $optCard.click(function() {
+            $('.option-card').removeClass('selected');
+            $('.option-card .fa-circle-check').addClass('hidden');
+            $('.option-card .badge').removeClass('bg-teal-600 text-white border-teal-600 rotate-12 scale-110').addClass('bg-slate-100 text-slate-500 border-slate-200');
+
+            $(this).addClass('selected');
+            $(this).find('.fa-circle-check').removeClass('hidden');
+            $(this).find('.badge').removeClass('bg-slate-100 text-slate-500 border-slate-200').addClass('bg-teal-600 text-white border-teal-600 rotate-12 scale-110');
+
+            userAnswers[index] = opt.category;
+            $('#btn-next').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+          });
+
+          $optionsContainer.append($optCard);
+        });
+
+        // STAGGERED FADE-IN ANIMATION FOR OPTIONS
+        $('.stagger-item').each(function(i) {
+          const item = $(this);
+          setTimeout(() => {
+            item.animate({ opacity: 1 }, 300).css('transform', 'translateY(0)');
+          }, i * 80);
+        });
+
+        // Update Buttons
+        if (index === 0) {
+          $('#btn-prev').addClass('opacity-0 cursor-default').prop('disabled', true);
+        } else {
+          $('#btn-prev').removeClass('opacity-0 cursor-default').prop('disabled', false);
+        }
+
+        if (userAnswers[index] !== null) {
+          $('#btn-next').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+        } else {
+          $('#btn-next').prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+        }
+
+        if (index === questions.length - 1) {
+          $('#btn-next').html('Xem Kết Quả <i class="fa-solid fa-square-poll-vertical ml-2"></i>');
+        } else {
+          $('#btn-next').html('Tiếp theo <i class="fa-solid fa-chevron-right ml-2"></i>');
+        }
+      }
+
+      // 3D Flip Card Animation
+      function animateQuestionTransition(direction) {
+        const $card = $('#question-card');
+        $card.addClass('flip-out');
+
+        setTimeout(() => {
+          renderQuestion(currentQuestionIndex);
+          $card.removeClass('flip-out').addClass('flip-in');
+          setTimeout(() => {
+            $card.removeClass('flip-in');
+          }, 300);
+        }, 300);
+      }
+
+      // Calculate Result & Trigger Celebrations
+      function calculateAndShowResult() {
+        const counts = { A: 0, B: 0, C: 0, D: 0 };
+        userAnswers.forEach(ans => { if (ans) counts[ans]++; });
+
+        let winningCategory = 'A';
+        let maxCount = -1;
+        for (const cat in counts) {
+          if (counts[cat] > maxCount) {
+            maxCount = counts[cat];
+            winningCategory = cat;
+          }
+        }
+
+        const res = resultPresets[winningCategory];
+
+        $('#result-title').text(res.title);
+        $('#result-locations').text(res.locations);
+        $('#result-image').attr('src', res.image);
+        $('#result-description').html(res.description);
+
+        const $highlights = $('#result-highlights').empty();
+        res.highlights.forEach(h => {
+          $highlights.append(`
+            <span class="px-3 py-1.5 bg-white border border-teal-200 text-teal-800 rounded-lg text-xs font-semibold shadow-sm flex items-center gap-1.5 hover:scale-105 transition">
+              <i class="fa-solid fa-star text-amber-400"></i> ${h}
+            </span>
+          `);
+        });
+
+        saveSurveyHistory({
+          title: res.title,
+          locations: res.locations,
+          stats: `A:${counts.A} | B:${counts.B} | C:${counts.C} | D:${counts.D}`,
+          date: new Date().toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
+        });
+
+        $('#quiz-screen').fadeOut(400, function() {
+          $('#result-screen').fadeIn(500);
+
+          // COUNT-UP NUMBER ANIMATION FOR STATS
+          animateCountUp('#stat-count-a', counts.A);
+          animateCountUp('#stat-count-b', counts.B);
+          animateCountUp('#stat-count-c', counts.C);
+          animateCountUp('#stat-count-d', counts.D);
+
+          // MULTI-STAGE CONFETTI CELEBRATION
+          if (typeof confetti === 'function') {
+            confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+            setTimeout(() => {
+              confetti({ particleCount: 60, angle: 60, spread: 55, origin: { x: 0 } });
+              confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1 } });
+            }, 400);
+          }
+        });
+      }
+
+      // Count-up Number Animation Helper
+      function animateCountUp(selector, target) {
+        $({ count: 0 }).animate({ count: target }, {
+          duration: 1200,
+          easing: 'swing',
+          step: function() {
+            $(selector).text(Math.floor(this.count));
+          },
+          complete: function() {
+            $(selector).text(this.count);
+          }
+        });
+      }
+
+      // LocalStorage Helpers
+      function saveSurveyHistory(record) {
+        let history = JSON.parse(localStorage.getItem('travel_survey_history')) || [];
+        history.unshift(record);
+        if (history.length > 10) history.pop();
+        localStorage.setItem('travel_survey_history', JSON.stringify(history));
+        updateHistoryCount();
+      }
+
+      function updateHistoryCount() {
+        let history = JSON.parse(localStorage.getItem('travel_survey_history')) || [];
+        $('#history-count').text(history.length);
+      }
+
+      function renderHistoryList() {
+        let history = JSON.parse(localStorage.getItem('travel_survey_history')) || [];
+        const $container = $('#history-list-container').empty();
+
+        if (history.length === 0) {
+          $container.html('<p class="text-center text-slate-400 py-6 text-sm">Chưa có khảo sát nào được lưu lại.</p>');
+          return;
+        }
+
+        history.forEach((item) => {
+          $container.append(`
+            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-1 hover:border-teal-300 transition">
+              <div class="flex justify-between items-center">
+                <span class="font-bold text-slate-900 text-sm">${item.title}</span>
+                <span class="text-xs text-slate-400">${item.date}</span>
+              </div>
+              <p class="text-xs text-teal-700 font-semibold"><i class="fa-solid fa-location-dot mr-1"></i> ${item.locations}</p>
+              <p class="text-[11px] text-slate-500 font-medium bg-slate-200/60 px-2 py-0.5 rounded w-fit">Thống kê: ${item.stats}</p>
+            </div>
+          `);
+        });
+      }
+
+    });
+  </script>
+</body>
+</html>
